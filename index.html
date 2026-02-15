@@ -1,1 +1,241 @@
-<div style="background:#09090b; color:#f4f4f5; height:100vh; display:flex; align-items:center; justify-content:center; font-family:sans-serif; text-align:center; padding: 20px;"><h1>OneClick Studio</h1></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            overflow: hidden;
+            user-select: none;
+        }
+        .oled-card {
+            background: #000000;
+            border: 1px solid #27272a;
+        }
+        .btn-active:active {
+            transform: scale(0.95);
+            background-color: #3f3f46 !important;
+        }
+        .operator-btn {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .operator-btn:active {
+            background: #3b82f6 !important;
+            color: white !important;
+        }
+        .equals-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        /* Fixed height for buttons based on viewport to ensure fit */
+        .calc-grid-btn {
+            height: clamp(50px, 11dvh, 75px);
+        }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col">
+    <div class="flex-1 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-5 justify-between">
+        
+        <!-- Top Navigation (Compact) -->
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                <span class="text-[10px] font-bold tracking-[0.2em] text-zinc-500 uppercase">OLED Calculator</span>
+            </div>
+            <button onclick="window.toggleHistory()" class="p-2 rounded-xl border border-zinc-800 text-zinc-400 active:scale-90">
+                <i data-lucide="history" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Output Display (Flexible) -->
+        <div class="flex-1 flex flex-col justify-end items-end pb-4 overflow-hidden">
+            <div id="prev-calc" class="text-zinc-600 text-lg font-medium mb-1 h-7 truncate w-full text-right"></div>
+            <div id="display" class="text-white text-6xl font-light tracking-tighter w-full text-right truncate transition-all">0</div>
+        </div>
+
+        <!-- Keypad Grid (Responsive height) -->
+        <div class="grid grid-cols-4 gap-3 mb-6">
+            <button onclick="window.clearDisplay()" class="calc-grid-btn btn-active rounded-2xl flex items-center justify-center text-red-500 bg-red-500/10 font-semibold text-lg">AC</button>
+            <button onclick="window.deleteLast()" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-zinc-400">
+                <i data-lucide="delete" class="w-5 h-5"></i>
+            </button>
+            <button onclick="window.appendOperator('%')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-zinc-400 text-xl font-medium">%</button>
+            <button onclick="window.appendOperator('/')" class="calc-grid-btn btn-active operator-btn rounded-2xl flex items-center justify-center text-2xl">÷</button>
+
+            <button onclick="window.appendNumber('7')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">7</button>
+            <button onclick="window.appendNumber('8')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">8</button>
+            <button onclick="window.appendNumber('9')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">9</button>
+            <button onclick="window.appendOperator('*')" class="calc-grid-btn btn-active operator-btn rounded-2xl flex items-center justify-center text-2xl">×</button>
+
+            <button onclick="window.appendNumber('4')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">4</button>
+            <button onclick="window.appendNumber('5')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">5</button>
+            <button onclick="window.appendNumber('6')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">6</button>
+            <button onclick="window.appendOperator('-')" class="calc-grid-btn btn-active operator-btn rounded-2xl flex items-center justify-center text-2xl">-</button>
+
+            <button onclick="window.appendNumber('1')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">1</button>
+            <button onclick="window.appendNumber('2')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">2</button>
+            <button onclick="window.appendNumber('3')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">3</button>
+            <button onclick="window.appendOperator('+')" class="calc-grid-btn btn-active operator-btn rounded-2xl flex items-center justify-center text-2xl">+</button>
+
+            <button onclick="window.appendNumber('0')" class="calc-grid-btn btn-active oled-card rounded-2xl col-span-2 flex items-center justify-center text-white text-2xl">0</button>
+            <button onclick="window.appendNumber('.')" class="calc-grid-btn btn-active oled-card rounded-2xl flex items-center justify-center text-white text-2xl">.</button>
+            <button onclick="window.calculate()" class="calc-grid-btn btn-active equals-btn rounded-2xl flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(59,130,246,0.2)]">=</button>
+        </div>
+    </div>
+
+    <!-- History View -->
+    <div id="history-overlay" class="fixed inset-0 bg-black z-50 translate-y-full transition-transform duration-300 flex flex-col">
+        <div class="flex justify-between items-center p-6 border-b border-zinc-900">
+            <h2 class="text-xl font-bold">History</h2>
+            <button onclick="window.toggleHistory()" class="text-zinc-500 font-medium">Done</button>
+        </div>
+        <div id="history-list" class="flex-1 overflow-y-auto p-6 space-y-6">
+        </div>
+        <div class="p-6 pb-[env(safe-area-inset-bottom)]">
+            <button onclick="window.clearHistory()" class="w-full py-4 rounded-2xl bg-zinc-900 text-zinc-400 font-semibold">Clear All History</button>
+        </div>
+    </div>
+
+    <script>
+        let currentVal = '0';
+        let prevVal = '';
+        let op = null;
+        let resetScreen = false;
+        let historyData = JSON.parse(localStorage.getItem('calc_history') || '[]');
+
+        const displayEl = document.getElementById('display');
+        const prevDisplayEl = document.getElementById('prev-calc');
+        const historyListEl = document.getElementById('history-list');
+
+        window.vibrate = () => {
+            if (window.NativeBridge && window.NativeBridge.vibrate) {
+                window.NativeBridge.vibrate(15);
+            }
+        };
+
+        window.updateUI = () => {
+            displayEl.innerText = currentVal;
+            prevDisplayEl.innerText = prevVal + (op || '');
+            // Scale text size if it gets too long
+            if (currentVal.length > 8) {
+                displayEl.className = 'text-white text-4xl font-light tracking-tighter w-full text-right truncate transition-all';
+            } else {
+                displayEl.className = 'text-white text-6xl font-light tracking-tighter w-full text-right truncate transition-all';
+            }
+        };
+
+        window.appendNumber = (n) => {
+            window.vibrate();
+            if (currentVal === '0' || resetScreen) {
+                currentVal = n;
+                resetScreen = false;
+            } else {
+                if (currentVal.length < 12) currentVal += n;
+            }
+            window.updateUI();
+        };
+
+        window.appendOperator = (selectedOp) => {
+            window.vibrate();
+            if (op !== null && !resetScreen) window.calculate();
+            prevVal = currentVal;
+            op = selectedOp;
+            resetScreen = true;
+            window.updateUI();
+        };
+
+        window.clearDisplay = () => {
+            window.vibrate();
+            currentVal = '0';
+            prevVal = '';
+            op = null;
+            window.updateUI();
+        };
+
+        window.deleteLast = () => {
+            window.vibrate();
+            if (currentVal.length > 1) {
+                currentVal = currentVal.slice(0, -1);
+            } else {
+                currentVal = '0';
+            }
+            window.updateUI();
+        };
+
+        window.calculate = () => {
+            window.vibrate();
+            if (op === null || resetScreen) return;
+            
+            let result;
+            const a = parseFloat(prevVal);
+            const b = parseFloat(currentVal);
+
+            switch (op) {
+                case '+': result = a + b; break;
+                case '-': result = a - b; break;
+                case '*': result = a * b; break;
+                case '/': result = b !== 0 ? a / b : 'Error'; break;
+                case '%': result = a % b; break;
+                default: return;
+            }
+
+            // Format result to avoid overflow
+            if (typeof result === 'number') {
+                result = Math.round(result * 100000000) / 100000000;
+            }
+
+            const entry = { equation: `${prevVal} ${op} ${currentVal}`, result: result };
+            historyData.unshift(entry);
+            localStorage.setItem('calc_history', JSON.stringify(historyData));
+
+            currentVal = result.toString();
+            op = null;
+            prevVal = '';
+            resetScreen = true;
+            window.updateUI();
+        };
+
+        window.toggleHistory = () => {
+            window.vibrate();
+            const overlay = document.getElementById('history-overlay');
+            overlay.classList.toggle('translate-y-full');
+            if (!overlay.classList.contains('translate-y-full')) {
+                window.renderHistory();
+            }
+        };
+
+        window.renderHistory = () => {
+            if (historyData.length === 0) {
+                historyListEl.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-zinc-700 opacity-50">
+                    <i data-lucide="layers" class="w-12 h-12 mb-2"></i>
+                    <p>No history found</p>
+                </div>`;
+            } else {
+                historyListEl.innerHTML = historyData.map(item => `
+                    <div class="flex flex-col items-end border-b border-zinc-900 pb-4">
+                        <span class="text-zinc-500 text-xs">${item.equation}</span>
+                        <span class="text-white text-xl font-semibold">${item.result}</span>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        };
+
+        window.clearHistory = () => {
+            window.vibrate();
+            historyData = [];
+            localStorage.removeItem('calc_history');
+            window.renderHistory();
+        };
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
