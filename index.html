@@ -1,161 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'>
+    <title>Neon Dash</title>
+    <script src='https://cdn.tailwindcss.com'></script>
     <style>
-        body {
-            background: radial-gradient(circle at top left, #1e293b, #0f172a);
-            overflow: hidden;
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 2rem;
-        }
-        .calc-btn {
-            transition: all 0.1s ease;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .calc-btn:active {
-            transform: scale(0.92);
-            background: rgba(255, 255, 255, 0.2) !important;
-        }
-        .display-area {
-            height: 160px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: flex-end;
-            padding: 1.5rem;
-        }
+        body { margin: 0; overflow: hidden; background: #09090b; font-family: 'Inter', sans-serif; }
+        #gameCanvas { display: block; touch-action: none; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
-<body class="h-[100dvh] flex items-center justify-center p-4">
+<body class='h-[100dvh] flex flex-col items-center justify-center overflow-hidden'>
 
-    <div class="glass-panel w-full max-w-md h-full max-h-[750px] flex flex-col overflow-hidden shadow-2xl">
-        <!-- Display Section -->
-        <div class="display-area text-right">
-            <div id="history-display" class="text-slate-400 text-sm mb-1 overflow-hidden h-6"></div>
-            <div id="main-display" class="text-white text-6xl font-light tracking-tighter truncate w-full">0</div>
+    <!-- UI Overlay -->
+    <div id='ui-container' class='fixed inset-0 z-10 flex items-center justify-center p-6'>
+        <!-- Start Screen -->
+        <div id='start-screen' class='glass p-8 rounded-[2rem] text-center w-full max-w-sm'>
+            <h1 class='text-4xl font-bold text-white mb-2 uppercase tracking-tighter'>Neon Dash</h1>
+            <p class='text-zinc-400 mb-8'>গ্যাপ দিয়ে নিরাপদে পার হোন এবং ফিনিশ লাইনে পৌঁছান।</p>
+            <button onclick='window.startGame()' class='w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg active:scale-95 transition-transform'>খেলা শুরু করুন</button>
         </div>
 
-        <!-- Buttons Grid -->
-        <div class="flex-1 grid grid-cols-4 gap-3 p-6 bg-white/5 rounded-t-[3rem]">
-            <!-- Row 1 -->
-            <button onclick="window.clearDisplay()" class="calc-btn flex items-center justify-center rounded-2xl bg-white/10 text-orange-400 font-semibold text-xl">AC</button>
-            <button onclick="window.appendOperator('/')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/10 text-cyan-400 text-2xl">÷</button>
-            <button onclick="window.appendOperator('*')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/10 text-cyan-400 text-2xl">×</button>
-            <button onclick="window.deleteLast()" class="calc-btn flex items-center justify-center rounded-2xl bg-white/10 text-red-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
-            </button>
+        <!-- Game Over Screen -->
+        <div id='game-over-screen' class='hidden glass p-8 rounded-[2rem] text-center w-full max-w-sm'>
+            <h1 class='text-4xl font-bold text-red-500 mb-2 uppercase'>গেম ওভার!</h1>
+            <p class='text-zinc-400 mb-8'>আপনি বাধা স্পর্শ করেছেন।</p>
+            <button onclick='window.startGame()' class='w-full py-4 bg-zinc-800 text-white rounded-2xl font-bold text-lg active:scale-95 transition-transform'>আবার চেষ্টা করুন</button>
+        </div>
 
-            <!-- Row 2 -->
-            <button onclick="window.appendNumber('7')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">7</button>
-            <button onclick="window.appendNumber('8')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">8</button>
-            <button onclick="window.appendNumber('9')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">9</button>
-            <button onclick="window.appendOperator('-')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/10 text-cyan-400 text-3xl">-</button>
-
-            <!-- Row 3 -->
-            <button onclick="window.appendNumber('4')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">4</button>
-            <button onclick="window.appendNumber('5')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">5</button>
-            <button onclick="window.appendNumber('6')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">6</button>
-            <button onclick="window.appendOperator('+')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/10 text-cyan-400 text-3xl">+</button>
-
-            <!-- Row 4 -->
-            <button onclick="window.appendNumber('1')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">1</button>
-            <button onclick="window.appendNumber('2')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">2</button>
-            <button onclick="window.appendNumber('3')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">3</button>
-            <button onclick="window.calculate()" class="calc-btn row-span-2 flex items-center justify-center rounded-2xl bg-cyan-500 text-white text-3xl shadow-lg shadow-cyan-500/20">=</button>
-
-            <!-- Row 5 -->
-            <button onclick="window.appendNumber('0')" class="calc-btn col-span-2 flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">0</button>
-            <button onclick="window.appendNumber('.')" class="calc-btn flex items-center justify-center rounded-2xl bg-white/5 text-white text-2xl">.</button>
+        <!-- Win Screen -->
+        <div id='win-screen' class='hidden glass p-8 rounded-[2rem] text-center w-full max-w-sm'>
+            <h1 class='text-4xl font-bold text-emerald-500 mb-2 uppercase'>অভিনন্দন!</h1>
+            <p class='text-zinc-400 mb-8'>আপনি লেভেলটি সফলভাবে শেষ করেছেন।</p>
+            <button onclick='window.startGame()' class='w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold text-lg active:scale-95 transition-transform'>আবার খেলুন</button>
         </div>
     </div>
 
+    <canvas id='gameCanvas'></canvas>
+
     <script>
-        let currentInput = '0';
-        let previousInput = '';
-        let operator = null;
-        let shouldResetScreen = false;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = 'START'; // START, PLAYING, OVER, WIN
+        let animationId;
+        
+        const player = {
+            x: 50,
+            y: 0,
+            size: 30,
+            velocity: 0,
+            gravity: 0.4,
+            jump: -7,
+            color: '#6366f1'
+        };
 
-        const mainDisplay = document.getElementById('main-display');
-        const historyDisplay = document.getElementById('history-display');
+        let obstacles = [];
+        let frameCount = 0;
+        let finishLineX = 5000; // Distance to win
+        let currentDistance = 0;
 
-        function triggerHaptic() {
-            if (window.NativeBridge && window.NativeBridge.vibrate) {
-                window.NativeBridge.vibrate(10);
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.y = canvas.height / 2;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function spawnObstacle() {
+            const gapHeight = 180;
+            const minObstacleHeight = 100;
+            const availableSpace = canvas.height - gapHeight;
+            const topHeight = Math.random() * (availableSpace - minObstacleHeight * 2) + minObstacleHeight;
+            
+            obstacles.push({
+                x: canvas.width,
+                topHeight: topHeight,
+                bottomY: topHeight + gapHeight,
+                width: 60,
+                passed: false
+            });
+        }
+
+        function handleInput() {
+            if (gameState === 'PLAYING') {
+                player.velocity = player.jump;
             }
         }
 
-        window.appendNumber = (number) => {
-            triggerHaptic();
-            if (currentInput === '0' || shouldResetScreen) {
-                currentInput = number;
-                shouldResetScreen = false;
-            } else {
-                currentInput += number;
-            }
-            updateDisplay();
+        window.addEventListener('mousedown', handleInput);
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleInput();
+        }, { passive: false });
+
+        window.startGame = () => {
+            gameState = 'PLAYING';
+            player.y = canvas.height / 2;
+            player.velocity = 0;
+            obstacles = [];
+            currentDistance = 0;
+            frameCount = 0;
+            
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('win-screen').classList.add('hidden');
+            
+            if (animationId) cancelAnimationFrame(animationId);
+            update();
         };
 
-        window.appendOperator = (op) => {
-            triggerHaptic();
-            if (operator !== null) window.calculate();
-            previousInput = currentInput;
-            operator = op;
-            historyDisplay.innerText = `${previousInput} ${op}`;
-            shouldResetScreen = true;
-        };
-
-        window.clearDisplay = () => {
-            triggerHaptic();
-            currentInput = '0';
-            previousInput = '';
-            operator = null;
-            historyDisplay.innerText = '';
-            updateDisplay();
-        };
-
-        window.deleteLast = () => {
-            triggerHaptic();
-            if (currentInput.length > 1) {
-                currentInput = currentInput.slice(0, -1);
-            } else {
-                currentInput = '0';
-            }
-            updateDisplay();
-        };
-
-        window.calculate = () => {
-            triggerHaptic();
-            if (operator === null || shouldResetScreen) return;
-            let result;
-            const prev = parseFloat(previousInput);
-            const current = parseFloat(currentInput);
-
-            switch (operator) {
-                case '+': result = prev + current; break;
-                case '-': result = prev - current; break;
-                case '*': result = prev * current; break;
-                case '/': result = prev / current; break;
-                default: return;
-            }
-
-            historyDisplay.innerText = `${previousInput} ${operator} ${currentInput} =`;
-            currentInput = result.toString().length > 10 ? result.toPrecision(8).toString() : result.toString();
-            operator = null;
-            shouldResetScreen = true;
-            updateDisplay();
-        };
-
-        function updateDisplay() {
-            mainDisplay.innerText = currentInput;
+        function gameOver() {
+            gameState = 'OVER';
+            if (window.NativeBridge) window.NativeBridge.vibrate(100);
+            document.getElementById('game-over-screen').classList.remove('hidden');
         }
+
+        function winGame() {
+            gameState = 'WIN';
+            document.getElementById('win-screen').classList.remove('hidden');
+        }
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Player Physics
+            player.velocity += player.gravity;
+            player.y += player.velocity;
+            currentDistance += 3;
+
+            // Floor/Ceiling collision
+            if (player.y < 0 || player.y + player.size > canvas.height) {
+                gameOver();
+            }
+
+            // Obstacles
+            if (frameCount % 90 === 0 && currentDistance < finishLineX - 1000) {
+                spawnObstacle();
+            }
+
+            obstacles.forEach((obs, index) => {
+                obs.x -= 3;
+
+                // Draw Obstacles
+                ctx.fillStyle = '#27272a';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                
+                // Top Pipe
+                ctx.fillRect(obs.x, 0, obs.width, obs.topHeight);
+                // Bottom Pipe
+                ctx.fillRect(obs.x, obs.bottomY, obs.width, canvas.height - obs.bottomY);
+
+                // Collision Detection
+                if (
+                    player.x < obs.x + obs.width &&
+                    player.x + player.size > obs.x &&
+                    (player.y < obs.topHeight || player.y + player.size > obs.bottomY)
+                ) {
+                    gameOver();
+                }
+
+                if (obs.x + obs.width < 0) {
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            // Finish Line Logic
+            if (currentDistance >= finishLineX) {
+                winGame();
+            }
+
+            // Draw Finish Line Indicator
+            const progress = (currentDistance / finishLineX) * 100;
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fillRect(0, 0, canvas.width, 4);
+            ctx.fillStyle = '#6366f1';
+            ctx.fillRect(0, 0, (canvas.width * progress) / 100, 4);
+
+            // Draw Player
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = player.color;
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.size, player.size, 8);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            frameCount++;
+            animationId = requestAnimationFrame(update);
+        }
+
+        // Initial Draw
+        ctx.fillStyle = '#09090b';
+        ctx.fillRect(0,0, canvas.width, canvas.height);
     </script>
 </body>
 </html>
